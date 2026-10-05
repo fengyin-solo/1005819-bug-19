@@ -79,13 +79,13 @@ import {
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
+import { countPumpsInMaintenance } from '@/api/pumpmaint-service'
 import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('pumprun')
 const columns = ["运行编号", "所属泵站", "泵组编号", "运行电流", "出水流量", "值班人", "记录时间", "运行状态"]
 const actions = ["提交开机", "登记停机", "上报故障"]
 const statuses = ["待开机", "运行中", "已停机", "故障停机"]
-const stats = [{"label": "运行中泵组", "value": 0}, {"label": "已停机泵组", "value": 0}, {"label": "故障停机泵组", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
@@ -98,6 +98,16 @@ const statusSummary = computed(() =>
     count: rows.value.filter((row) => String(row.status) === status).length,
   })),
 )
+// 「检修中泵组」与泵组检修台账页同口径读取，保证两个页面的数对得上。
+const stats = computed(() => {
+  const countByStatus = (status: string) =>
+    rows.value.filter((row) => String(row.status) === status).length
+  return [
+    { label: '运行中泵组', value: countByStatus('运行中') },
+    { label: '检修中泵组', value: countPumpsInMaintenance() },
+    { label: '故障停机泵组', value: countByStatus('故障停机') },
+  ]
+})
 
 function resetFilters() {
   filters.value = {}

@@ -16,6 +16,10 @@
         <span class="stat-label">{{ item.label }}</span>
         <strong class="stat-value">{{ item.value }}</strong>
       </article>
+      <article class="stat-card shared-stat">
+        <span class="stat-label">检修中泵组（与泵组检修台账一致）</span>
+        <strong class="stat-value">{{ repairingFromMaint }}</strong>
+      </article>
     </div>
 
     <p class="status-legend">
@@ -76,6 +80,7 @@ import { computed, onMounted, ref } from 'vue'
 import {
   downloadEntries,
   listEntries,
+  maintenanceMetrics,
   moduleMeta,
   runAction as applyAction,
 } from '@/api/local-service'
@@ -86,6 +91,9 @@ const columns = ["运行编号", "所属泵站", "泵组编号", "运行电流",
 const actions = ["提交开机", "登记停机", "上报故障"]
 const statuses = ["待开机", "运行中", "已停机", "故障停机"]
 const stats = [{"label": "运行中泵组", "value": 0}, {"label": "已停机泵组", "value": 0}, {"label": "故障停机泵组", "value": 0}]
+
+// 检修中台数与泵组检修台账共用同一份统计，两个页面读到的数必须一致。
+const repairingFromMaint = ref(maintenanceMetrics().repairing)
 
 const rows = ref<EntryRow[]>([])
 const total = ref(0)
@@ -128,6 +136,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    repairingFromMaint.value = maintenanceMetrics().repairing
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '泵组运行列表读取失败'
   }
